@@ -1,18 +1,24 @@
 import { useState } from 'react';
 import MonthNavigator from './components/MonthNavigator';
 import SleepTrackingSection from './components/SleepTrackingSection';
+import DietTrackingSection from './components/DietTrackingSection';
+import OtherMetricsSection from './components/OtherMetricsSection';
 import Modal from './components/Modal';
 import SleepDataForm from './components/SleepDataForm';
+import DietDataForm from './components/DietDataForm';
+import OtherMetricsForm from './components/OtherMetricsForm';
 import { getCurrentMonthYear } from './utils/dateUtils';
 import { getMonthData, updateDataForDate } from './utils/storage';
 import { generateOctoberSampleData, clearSampleData } from './utils/sampleData';
-import { SleepData } from './types/tracking';
+import { SleepData, DietData, CaloriesData, OtherMetrics } from './types/tracking';
 import './App.css';
+
+type ModalType = 'sleep' | 'diet' | 'other' | null;
 
 function App() {
   const [currentDate, setCurrentDate] = useState(getCurrentMonthYear());
   const [monthData, setMonthData] = useState(getMonthData(currentDate.year, currentDate.month));
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
 
   const handleMonthChange = (year: number, month: number) => {
@@ -20,20 +26,41 @@ function App() {
     setMonthData(getMonthData(year, month));
   };
 
-  const handleCellClick = (date: string, _metric: keyof SleepData) => {
+  const handleSleepCellClick = (date: string, _metric: keyof SleepData) => {
     setSelectedDate(date);
-    setIsModalOpen(true);
+    setModalType('sleep');
+  };
+
+  const handleDietCellClick = (date: string, _section: 'diet' | 'calories') => {
+    setSelectedDate(date);
+    setModalType('diet');
+  };
+
+  const handleOtherCellClick = (date: string) => {
+    setSelectedDate(date);
+    setModalType('other');
   };
 
   const handleSaveSleepData = (sleepData: SleepData) => {
     updateDataForDate(selectedDate, { sleep: sleepData });
-    // Refresh the month data
     setMonthData(getMonthData(currentDate.year, currentDate.month));
-    setIsModalOpen(false);
+    setModalType(null);
+  };
+
+  const handleSaveDietData = (dietData: DietData, caloriesData: CaloriesData) => {
+    updateDataForDate(selectedDate, { diet: dietData, calories: caloriesData });
+    setMonthData(getMonthData(currentDate.year, currentDate.month));
+    setModalType(null);
+  };
+
+  const handleSaveOtherMetrics = (otherData: OtherMetrics) => {
+    updateDataForDate(selectedDate, { other: otherData });
+    setMonthData(getMonthData(currentDate.year, currentDate.month));
+    setModalType(null);
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
+    setModalType(null);
     setSelectedDate('');
   };
 
@@ -49,11 +76,24 @@ function App() {
     }
   };
 
-  // Extract sleep data from monthly data
+  // Extract data from monthly data
   const sleepData: { [date: string]: SleepData } = {};
+  const dietData: { [date: string]: DietData } = {};
+  const caloriesData: { [date: string]: CaloriesData } = {};
+  const otherData: { [date: string]: OtherMetrics } = {};
+  
   Object.keys(monthData).forEach(date => {
     if (monthData[date].sleep) {
       sleepData[date] = monthData[date].sleep!;
+    }
+    if (monthData[date].diet) {
+      dietData[date] = monthData[date].diet!;
+    }
+    if (monthData[date].calories) {
+      caloriesData[date] = monthData[date].calories!;
+    }
+    if (monthData[date].other) {
+      otherData[date] = monthData[date].other!;
     }
   });
 
@@ -93,12 +133,27 @@ function App() {
           year={currentDate.year}
           month={currentDate.month}
           sleepData={sleepData}
-          onCellClick={handleCellClick}
+          onCellClick={handleSleepCellClick}
+        />
+
+        <DietTrackingSection
+          year={currentDate.year}
+          month={currentDate.month}
+          dietData={dietData}
+          caloriesData={caloriesData}
+          onCellClick={handleDietCellClick}
+        />
+
+        <OtherMetricsSection
+          year={currentDate.year}
+          month={currentDate.month}
+          otherData={otherData}
+          onCellClick={handleOtherCellClick}
         />
 
         {/* Sleep Data Entry Modal */}
         <Modal
-          isOpen={isModalOpen}
+          isOpen={modalType === 'sleep'}
           onClose={handleCloseModal}
           title="😴 Edit Sleep Data"
         >
@@ -110,7 +165,34 @@ function App() {
           />
         </Modal>
 
-        {/* TODO: Add more sections: Diet, Calories, Other Metrics */}
+        {/* Diet Data Entry Modal */}
+        <Modal
+          isOpen={modalType === 'diet'}
+          onClose={handleCloseModal}
+          title="🍎 Edit Diet & Calories Data"
+        >
+          <DietDataForm
+            date={selectedDate}
+            initialDietData={dietData[selectedDate]}
+            initialCaloriesData={caloriesData[selectedDate]}
+            onSave={handleSaveDietData}
+            onCancel={handleCloseModal}
+          />
+        </Modal>
+
+        {/* Other Metrics Entry Modal */}
+        <Modal
+          isOpen={modalType === 'other'}
+          onClose={handleCloseModal}
+          title="📈 Edit Other Metrics"
+        >
+          <OtherMetricsForm
+            date={selectedDate}
+            initialData={otherData[selectedDate]}
+            onSave={handleSaveOtherMetrics}
+            onCancel={handleCloseModal}
+          />
+        </Modal>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { DailyTracking, SleepData } from '../types/tracking';
+import { DailyTracking, SleepData, DietData, CaloriesData, OtherMetrics } from '../types/tracking';
 import { saveTrackingData } from './storage';
 
 /**
@@ -45,6 +45,63 @@ const generateSampleSleepData = (): SleepData => {
 };
 
 /**
+ * Generate realistic sample diet data
+ */
+const generateSampleDietData = (): DietData => {
+  const caloriesConsumed = Math.round(2000 + Math.random() * 800); // 2000-2800
+  const protein = Math.round(120 + Math.random() * 60); // 120-180g
+  const fat = Math.round(60 + Math.random() * 40); // 60-100g
+  const carbs = Math.round(200 + Math.random() * 150); // 200-350g
+  const sugar = Math.round(30 + Math.random() * 70); // 30-100g
+  
+  return {
+    caloriesConsumed,
+    protein,
+    fat,
+    carbs,
+    sugar
+  };
+};
+
+/**
+ * Generate realistic sample calories data
+ */
+const generateSampleCaloriesData = (caloriesConsumed: number): CaloriesData => {
+  const caloriesBurnedBMR = Math.round(1700 + Math.random() * 300); // 1700-2000
+  const caloriesBurnedActive = Math.round(400 + Math.random() * 600); // 400-1000
+  const caloriesBurnedUnregistered = Math.round(0 + Math.random() * 300); // 0-300
+  const caloriesBurnedTotal = caloriesBurnedBMR + caloriesBurnedActive + caloriesBurnedUnregistered;
+  const caloriesDeficit = caloriesBurnedTotal - caloriesConsumed;
+  
+  return {
+    caloriesBurnedTotal,
+    caloriesBurnedActive,
+    caloriesBurnedBMR,
+    caloriesBurnedUnregistered,
+    caloriesDeficit
+  };
+};
+
+/**
+ * Generate realistic sample other metrics
+ */
+const generateSampleOtherMetrics = (): OtherMetrics => {
+  const weightMorning = 75 + (Math.random() * 3 - 1.5); // 73.5-76.5kg with variation
+  const restingHR = Math.round(60 + Math.random() * 10); // 60-70 bpm
+  const cardioLoad = Math.round(80 + Math.random() * 120); // 80-200
+  const unregisteredCardioLoad = Math.round(0 + Math.random() * 100); // 0-100
+  const cardioLoadTotal = cardioLoad + unregisteredCardioLoad;
+  
+  return {
+    weightMorning: parseFloat(weightMorning.toFixed(1)),
+    restingHR,
+    cardioLoadTotal,
+    cardioLoad,
+    unregisteredCardioLoad
+  };
+};
+
+/**
  * Generate sample data for October 2025
  */
 export const generateOctoberSampleData = (): void => {
@@ -53,10 +110,14 @@ export const generateOctoberSampleData = (): void => {
   // Generate data for first 20 days of October 2025
   for (let day = 1; day <= 20; day++) {
     const dateString = `2025-10-${String(day).padStart(2, '0')}`;
+    const dietData = generateSampleDietData();
     
     sampleData[dateString] = {
       date: dateString,
-      sleep: generateSampleSleepData()
+      sleep: generateSampleSleepData(),
+      diet: dietData,
+      calories: generateSampleCaloriesData(dietData.caloriesConsumed),
+      other: generateSampleOtherMetrics()
     };
   }
   
