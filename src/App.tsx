@@ -3,6 +3,7 @@ import MonthNavigator from './components/MonthNavigator';
 import SleepTrackingSection from './components/SleepTrackingSection';
 import DietTrackingSection from './components/DietTrackingSection';
 import OtherMetricsSection from './components/OtherMetricsSection';
+import FitbitSyncPanel from './components/FitbitSyncPanel';
 import Modal from './components/Modal';
 import SleepDataForm from './components/SleepDataForm';
 import DietDataForm from './components/DietDataForm';
@@ -18,6 +19,10 @@ type ModalType = 'sleep' | 'diet' | 'other' | null;
 function App() {
   const [currentDate, setCurrentDate] = useState(getCurrentMonthYear());
   const [monthData, setMonthData] = useState(getMonthData(currentDate.year, currentDate.month));
+  
+  const refreshData = () => {
+    setMonthData(getMonthData(currentDate.year, currentDate.month));
+  };
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
 
@@ -126,6 +131,11 @@ function App() {
             </div>
           </div>
         </header>
+
+        {/* Fitbit Sync Panel */}
+        <div className="mb-6">
+          <FitbitSyncPanel onSyncComplete={refreshData} />
+        </div>
 
         <MonthNavigator onMonthChange={handleMonthChange} />
 
