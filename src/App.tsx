@@ -1,35 +1,59 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import MonthNavigator from './components/MonthNavigator';
+import SleepTrackingSection from './components/SleepTrackingSection';
+import { getCurrentMonthYear } from './utils/dateUtils';
+import { getMonthData } from './utils/storage';
+import { SleepData } from './types/tracking';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentDate, setCurrentDate] = useState(getCurrentMonthYear());
+  const [monthData, setMonthData] = useState(getMonthData(currentDate.year, currentDate.month));
+
+  const handleMonthChange = (year: number, month: number) => {
+    setCurrentDate({ year, month });
+    setMonthData(getMonthData(year, month));
+  };
+
+  const handleCellClick = (date: string, metric: keyof SleepData) => {
+    // TODO: Open modal/form for editing this specific cell
+    console.log(`Clicked: ${date} - ${metric}`);
+    alert(`Edit ${metric} for ${date}\n(Form coming in next step!)`);
+  };
+
+  // Extract sleep data from monthly data
+  const sleepData: { [date: string]: SleepData } = {};
+  Object.keys(monthData).forEach(date => {
+    if (monthData[date].sleep) {
+      sleepData[date] = monthData[date].sleep!;
+    }
+  });
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-[100vw] mx-auto">
+        <header className="mb-6">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+            🏃‍♂️ David's Tracking System
+          </h1>
+          <p className="text-gray-600">
+            Comprehensive health & fitness tracking with automated data sync
+          </p>
+        </header>
+
+        <MonthNavigator onMonthChange={handleMonthChange} />
+
+        <SleepTrackingSection
+          year={currentDate.year}
+          month={currentDate.month}
+          sleepData={sleepData}
+          onCellClick={handleCellClick}
+        />
+
+        {/* TODO: Add more sections: Diet, Calories, Other Metrics */}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
